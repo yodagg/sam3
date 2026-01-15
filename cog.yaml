@@ -1,0 +1,18 @@
+build:
+  gpu: true
+  python_version: "3.12"
+  python_packages:
+    - "torch==2.3.1"
+    - "torchvision==0.18.1"
+    - "timm>=1.0.17"
+    - "numpy>=1.26,<2"
+    - "tqdm"
+    - "ftfy==6.1.1"
+    - "regex"
+    - "iopath>=0.1.10"
+    - "typing_extensions"
+    - "huggingface_hub"
+    - "pillow"
+    - "opencv-python"
+predict: "predict.py:Predictor"
+
