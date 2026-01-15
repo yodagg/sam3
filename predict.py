@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import os
 
@@ -22,7 +22,7 @@ class Predictor(BasePredictor):
             bpe_path=bpe_path,
             device=device,
             enable_segmentation=True,
-            enable_inst_interactivity=False,
+            enable_inst_interactivity=True,
         )
 
         self.processor = Sam3Processor(model, device=device)
@@ -31,6 +31,22 @@ class Predictor(BasePredictor):
         self,
         image: Path = Input(description="Input image"),
         prompt: str = Input(description="Text prompt describing what to segment"),
+        points: Optional[List[List[float]]] = Input(
+            description="Point prompts as [[x,y], ...] in pixels",
+            default=None,
+        ),
+        point_labels: Optional[List[int]] = Input(
+            description="Labels for points: 1=foreground, 0=background",
+            default=None,
+        ),
+        box_xyxy: Optional[List[float]] = Input(
+            description="Box prompt [x0,y0,x1,y1] in pixels",
+            default=None,
+        ),
+        multimask_output: bool = Input(
+            description="Return multiple masks for ambiguous prompts",
+            default=True,
+        ),
         confidence_threshold: float = Input(
             description="Minimum score to keep a mask",
             default=0.5,
@@ -44,9 +60,66 @@ class Predictor(BasePredictor):
             le=100,
         ),
     ) -> Dict[str, Any]:
+        import numpy as np
+        import torch
+        from PIL import Image as PILImage
+        from sam3.model.box_ops import box_xyxy_to_xywh
+        from torchvision.ops import masks_to_boxes
+        from sam3.train.masks_ops import rle_encode
+
         self.processor.set_confidence_threshold(confidence_threshold)
 
-        result = sam3_inference(self.processor, str(image), prompt)
+        if points is not None or box_xyxy is not None:
+            img = PILImage.open(str(image))
+            state = self.processor.set_image(img)
+
+            pc = None if points is None else np.array(points, dtype=np.float32)
+            pl = None if point_labels is None else np.array(point_labels, dtype=np.int64)
+            bx = None if box_xyxy is None else np.array(box_xyxy, dtype=np.float32)
+
+            if pc is not None and pl is None:
+                pl = np.ones((pc.shape[0],), dtype=np.int64)
+
+            masks_np, scores_np, _ = self.processor.model.predict_inst(
+                state,
+                point_coords=pc,
+                point_labels=pl,
+                box=bx,
+                multimask_output=multimask_output,
+            )
+
+            masks_t = torch.from_numpy(masks_np)
+            boxes_xyxy = masks_to_boxes(masks_t)
+
+            orig_w, orig_h = img.size
+            boxes_xyxy_norm = torch.stack(
+                [
+                    boxes_xyxy[:, 0] / orig_w,
+                    boxes_xyxy[:, 1] / orig_h,
+                    boxes_xyxy[:, 2] / orig_w,
+                    boxes_xyxy[:, 3] / orig_h,
+                ],
+                dim=-1,
+            )
+            boxes_xywh_norm = box_xyxy_to_xywh(boxes_xyxy_norm).tolist()
+
+            rles = rle_encode(masks_t)
+            pred_masks = [m["counts"] for m in rles]
+
+            scores = scores_np.tolist()
+            boxes = boxes_xywh_norm
+            masks = pred_masks
+
+            result = {
+                "orig_img_h": orig_h,
+                "orig_img_w": orig_w,
+                "pred_boxes": boxes,
+                "pred_masks": masks,
+                "pred_scores": scores,
+            }
+        else:
+            result = sam3_inference(self.processor, str(image), prompt)
+
         result = remove_overlapping_masks(result)
 
         scores = result.get("pred_scores") or []
@@ -74,4 +147,3 @@ class Predictor(BasePredictor):
         result["pred_masks"] = filtered_masks
 
         return result
-
