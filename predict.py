@@ -31,18 +31,18 @@ class Predictor(BasePredictor):
         self,
         image: Path = Input(description="Input image"),
         prompt: str = Input(description="Text prompt describing what to segment"),
-        points: Optional[str] = Input(
-            description="Point prompts as JSON string [[x,y], ...] in pixels",
-            default=None,
-        ),
-        point_labels: Optional[str] = Input(
-            description="Labels for points as JSON string [1, 0, ...]: 1=foreground, 0=background",
-            default=None,
-        ),
-        box_xyxy: Optional[List[float]] = Input(
-            description="Box prompt [x0,y0,x1,y1] in pixels",
-            default=None,
-        ),
+        # points: Optional[str] = Input(
+        #     description="Point prompts as JSON string [[x,y], ...] in pixels",
+        #     default=None,
+        # ),
+        # point_labels: Optional[str] = Input(
+        #     description="Labels for points as JSON string [1, 0, ...]: 1=foreground, 0=background",
+        #     default=None,
+        # ),
+        # box_xyxy: Optional[List[float]] = Input(
+        #     description="Box prompt [x0,y0,x1,y1] in pixels",
+        #     default=None,
+        # ),
         multimask_output: bool = Input(
             description="Return multiple masks for ambiguous prompts",
             default=True,
@@ -71,19 +71,20 @@ class Predictor(BasePredictor):
         self.processor.set_confidence_threshold(confidence_threshold)
         
         points_list = None
-        if points:
-            try:
-                points_list = json.loads(points)
-            except Exception as e:
-                print(f"Error parsing points JSON: {e}")
+        # if points:
+        #     try:
+        #         points_list = json.loads(points)
+        #     except Exception as e:
+        #         print(f"Error parsing points JSON: {e}")
 
         point_labels_list = None
-        if point_labels:
-            try:
-                point_labels_list = json.loads(point_labels)
-            except Exception as e:
-                print(f"Error parsing point_labels JSON: {e}")
+        # if point_labels:
+        #     try:
+        #         point_labels_list = json.loads(point_labels)
+        #     except Exception as e:
+        #         print(f"Error parsing point_labels JSON: {e}")
 
+        box_xyxy = None
         if points_list is not None or box_xyxy is not None:
             img = PILImage.open(str(image))
             state = self.processor.set_image(img)
