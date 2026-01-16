@@ -31,15 +31,15 @@ class Predictor(BasePredictor):
         self,
         image: Path = Input(description="Input image"),
         prompt: str = Input(description="Text prompt describing what to segment"),
-        points: str = Input(
+        points: Optional[str] = Input(
             description="Point prompts as JSON string [[x,y], ...] in pixels",
             default=None,
         ),
-        point_labels: str = Input(
+        point_labels: Optional[str] = Input(
             description="Labels for points as JSON string [1, 0, ...]: 1=foreground, 0=background",
             default=None,
         ),
-        box_xyxy: List[float] = Input(
+        box_xyxy: Optional[List[float]] = Input(
             description="Box prompt [x0,y0,x1,y1] in pixels",
             default=None,
         ),
