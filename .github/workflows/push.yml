@@ -1,0 +1,40 @@
+name: Push to Replicate
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_name:
+        description: 'The name of the model to push to. Format: owner/model_name'
+        required: true
+        default: 'yodagg/sam3-image-seg'
+  push:
+    branches:
+      - main
+
+jobs:
+  push_to_replicate:
+    name: Push to Replicate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          docker-images: false
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Cog
+        uses: replicate/setup-cog@v2
+        with:
+          token: ${{ secrets.REPLICATE_API_TOKEN }}
+
+      - name: Push to Replicate
+        run: |
+          if [ -n "${{ inputs.model_name }}" ]; then
+            MODEL_NAME=${{ inputs.model_name }}
+          else
+            MODEL_NAME=yodagg/sam3-image-seg
+          fi
+          cog push r8.im/$MODEL_NAME
