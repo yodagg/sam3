@@ -31,15 +31,15 @@ class Predictor(BasePredictor):
         self,
         image: Path = Input(description="Input image"),
         prompt: str = Input(description="Text prompt describing what to segment"),
-        points: Optional[List[List[float]]] = Input(
-            description="Point prompts as [[x,y], ...] in pixels",
+        points: str = Input(
+            description="Point prompts as JSON string [[x,y], ...] in pixels",
             default=None,
         ),
-        point_labels: Optional[List[int]] = Input(
-            description="Labels for points: 1=foreground, 0=background",
+        point_labels: str = Input(
+            description="Labels for points as JSON string [1, 0, ...]: 1=foreground, 0=background",
             default=None,
         ),
-        box_xyxy: Optional[List[float]] = Input(
+        box_xyxy: List[float] = Input(
             description="Box prompt [x0,y0,x1,y1] in pixels",
             default=None,
         ),
@@ -66,15 +66,30 @@ class Predictor(BasePredictor):
         from sam3.model.box_ops import box_xyxy_to_xywh
         from torchvision.ops import masks_to_boxes
         from sam3.train.masks_ops import rle_encode
+        import json
 
         self.processor.set_confidence_threshold(confidence_threshold)
+        
+        points_list = None
+        if points:
+            try:
+                points_list = json.loads(points)
+            except Exception as e:
+                print(f"Error parsing points JSON: {e}")
 
-        if points is not None or box_xyxy is not None:
+        point_labels_list = None
+        if point_labels:
+            try:
+                point_labels_list = json.loads(point_labels)
+            except Exception as e:
+                print(f"Error parsing point_labels JSON: {e}")
+
+        if points_list is not None or box_xyxy is not None:
             img = PILImage.open(str(image))
             state = self.processor.set_image(img)
 
-            pc = None if points is None else np.array(points, dtype=np.float32)
-            pl = None if point_labels is None else np.array(point_labels, dtype=np.int64)
+            pc = None if points_list is None else np.array(points_list, dtype=np.float32)
+            pl = None if point_labels_list is None else np.array(point_labels_list, dtype=np.int64)
             bx = None if box_xyxy is None else np.array(box_xyxy, dtype=np.float32)
 
             if pc is not None and pl is None:
