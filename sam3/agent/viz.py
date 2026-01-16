@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import pycocotools.mask as mask_utils
 from PIL import Image
+from typing import Optional
 
 from .helpers.visualizer import Visualizer
 from .helpers.zoom_in import render_zoom_in
@@ -13,7 +14,7 @@ from .helpers.zoom_in import render_zoom_in
 
 def visualize(
     input_json: dict,
-    zoom_in_index: int | None = None,
+    zoom_in_index: Optional[int] = None,
     mask_alpha: float = 0.15,
     label_mode: str = "1",
     font_size_multiplier: float = 1.2,
