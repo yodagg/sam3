@@ -1590,7 +1590,7 @@ class Sam3VideoBase(nn.Module):
                 tracker_states_local.append(tracker_inference_state)
 
     def _tracker_remove_objects(
-        self, tracker_states_local: List[Any], obj_ids: list[int]
+        self, tracker_states_local: List[Any], obj_ids: List[int]
     ):
         """
         Remove an object from SAM2 inference states. This would remove the object from

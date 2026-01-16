@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from typing import List
 
 import cv2
 import matplotlib.patches as patches
@@ -670,7 +671,7 @@ def get_annot_df(file_path: str):
     return dfs
 
 
-def get_annot_dfs(file_list: list[str]):
+def get_annot_dfs(file_list: List[str]):
     dfs = {}
     for annot_file in tqdm(file_list):
         dataset_name = Path(annot_file).stem
