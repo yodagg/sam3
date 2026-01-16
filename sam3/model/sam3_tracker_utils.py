@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from numpy.typing import NDArray
+from typing import Tuple
 from sam3.model.edt import edt_triton
 
 
@@ -15,7 +16,7 @@ def sample_box_points(
     noise_bound: int = 20,  # SAM default
     top_left_label: int = 2,
     bottom_right_label: int = 3,
-) -> tuple[NDArray, NDArray]:
+) -> Tuple[NDArray, NDArray]:
     """
     Sample a noised version of the top left and bottom right corners of a given `bbox`
 
