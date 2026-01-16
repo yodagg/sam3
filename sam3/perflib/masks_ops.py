@@ -3,9 +3,10 @@
 # pyre-unsafe
 
 import torch
+from typing import List
 
 
-def masks_to_boxes(masks: torch.Tensor, obj_ids: list[int]):
+def masks_to_boxes(masks: torch.Tensor, obj_ids: List[int]):
     with torch.autograd.profiler.record_function("perflib: masks_to_boxes"):
         # Sanity check based on callsite for replacement
         assert masks.shape[0] == len(obj_ids)
